@@ -1,1 +1,30 @@
+name: Render Keep-Alive
 
+on:
+  schedule:
+    # Läuft alle 10 Minuten (Render schläft nach 15 Minuten Inaktivität ein)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Erlaubt auch den manuellen Test per Button
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Service
+        run: |
+          # Ersetze die URL mit deiner echten Render- oder Subdomain-URL
+          URL="https://mein-chat.duo-tools.de"
+          
+          echo "Pinging $URL..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          
+          echo "HTTP Status Code: $RESPONSE"
+          
+          # Akzeptiere 200er oder auch 301/302 Redirects als Erfolg
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 301 ] || [ "$RESPONSE" -eq 302 ]; then
+            echo "Success: Service is awake!"
+            exit 0
+          else
+            echo "Warning: Received status $RESPONSE"
+            exit 0 # Verhindert, dass Actions wegen eines temporären Standbys fehlschlägt
+          fi
